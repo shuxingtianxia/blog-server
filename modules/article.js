@@ -20,6 +20,7 @@ const articleSchema = mongoose.Schema({
     articleContent:{type:String,required:true},     //  文章内容
     time: {type: String,default: Date.now()},      //  发布时间
     author:{type:String,default:'admin'},    // 发布作者
+    likeCount: {type: Number, default: 0}, // 收藏数量
     views:{type: Number,default: 0},       //   阅读量
     comment: {type: Array,default: []}   //  文章评论
 })

@@ -15,7 +15,7 @@ exports.formDate = () => {
 exports.isAdmin = (req, res, next) => {
   const token = req.headers.authorization.split(' ').pop()
   try {
-    const userInfo = jwt.verify(token, 'secret')
+    global.userInfo = jwt.verify(token, 'secret')
     console.log('userInfo', userInfo)
     next()
   }catch(err) {

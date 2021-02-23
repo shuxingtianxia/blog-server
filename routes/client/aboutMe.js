@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router()
 
-const {AboutSchema} = require('../modules/aboutMe')
+const {AboutSchema} = require('../../modules/aboutMe')
 
 /*
 *   添加关于我     /about_me

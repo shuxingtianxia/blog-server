@@ -1,25 +1,25 @@
 const express = require('express')
-const multer = require('multer')
-const ueditor = require("ueditor");
+// const multer = require('multer')
+// const ueditor = require("ueditor")
 const bodyParser = require('body-parser')
 // 根据token实现验证请求
 const passport = require('passport')
 
 //引入处理路径模块
-const path = require('path');
+const path = require('path')
 
 const app = express()
 
 //开放静态资源
-app.use(express.static('./uploads'))
-// app.use(express.static('./public'))
-//处理静态文件 todo
-// 访问静态资源文件 这里是访问所有dist目录下的静态资源文件
-app.use(express.static(path.resolve(__dirname, 'public/')))
-app.use('/ueditor', function(req, res ,next) {
-    res.render('views/');
-    next();
-});
+// app.use(express.static('./uploads'))
+// // app.use(express.static('./public'))
+// //处理静态文件 todo
+// // 访问静态资源文件 这里是访问所有dist目录下的静态资源文件
+// app.use(express.static(path.resolve(__dirname, 'public/')))
+// app.use('/ueditor', function(req, res ,next) {
+//     res.render('views/');
+//     next();
+// });
 
 // 连接数据库
 // 1.引用mongoose
@@ -33,13 +33,9 @@ mongoose.connect('mongodb://localhost/test93', {
     console.log('连接数据库失败');
 })
 
-// 引入user.js
-const userRouter = require('./routes/users')
-const articleRouter = require('./routes/article')
-const adminRouter = require('./routes/admin')
-const aboutRouter = require('./routes/aboutMe')
-const photoRouter = require('./routes/photo')
-const qiniuRouter = require('./routes/qiniu')
+// 引入路由  前台
+const route = require('./routes/index')
+route(app)
 
 //允许跨域
 app.all('*', (req, res, next) => {
@@ -62,17 +58,17 @@ app.get('/', (req, res) => {
 })
 
 // 设置图片存储路径
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, './uploads');
-    },
-    filename: function (req, file, cb) {
-        cb(null, `${Date.now()}-${file.originalname}`)
-    }
-})
-// 添加配置文件到multer对象。
-const upload = multer({storage: storage});
-app.use(upload.single('file'));
+// const storage = multer.diskStorage({
+//     destination: function (req, file, cb) {
+//         cb(null, './uploads');
+//     },
+//     filename: function (req, file, cb) {
+//         cb(null, `${Date.now()}-${file.originalname}`)
+//     }
+// })
+// // 添加配置文件到multer对象。
+// const upload = multer({storage: storage});
+// app.use(upload.single('file'));
 
 // 使用body-parser中间件
 app.use(bodyParser.urlencoded({extended: true}))
@@ -82,18 +78,9 @@ app.use(bodyParser.json())
 app.use(passport.initialize())
 require('./config/passport')(passport)
 
-// 使用router中间件
-app.use('/', userRouter)
-app.use('/article', articleRouter)
-app.use('/article', adminRouter)
-app.use('/about', aboutRouter)
-app.use('/photo', photoRouter)
-app.use('/qiniu', qiniuRouter)
-
 //使用模块
 
 const post = process.env.POST || 6677
 app.listen(post, () => {
-    console.log(post);
     console.log('服务器启动成功');
 })

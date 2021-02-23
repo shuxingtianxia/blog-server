@@ -1,10 +1,11 @@
 const express = require('express')
 const router = express.Router()
 
-const {CategorySchema, ArticleSchema} = require('../modules/article')
+const {CategorySchema, ArticleSchema} = require('../../modules/article')
+const {likeSchema} = require('../../modules/like')
 
 // 定义时间格式
-const {formDate} = require('../unit/unit')
+const {formDate, isAdmin} = require('../../unit/unit')
 
 /*
 *   获取所有分类    /index_category
@@ -107,7 +108,13 @@ router.get('/index_article_next',(req, res) => {
 * */
 router.get('/index_detail',(req, res) => {
     let _id = req.query.id
+    console.log(global.userInfo)
     ArticleSchema.findOne({_id}).then(doc => {
+        // 查询点赞数量及该用户是否已经点赞过
+        // likeSchema.findOne({articleId: _id}).then(doc1 => {
+        //     doc.likeCount = doc1.likeCount
+
+        // })
         doc.views++;
         doc.save()
         return res.json({code:0,data:doc})
@@ -149,17 +156,33 @@ router.get('/index_detail_comments',(req, res) => {
 /*
 *   点赞      /index_detail_like
 * */
-// router.post('/index_detail_like',(req, res) => {
-//     const {like, _id} = req.body;
-//     console.log(_id);
-//     ArticleSchema.findOne({_id}).then((doc) => {
-//         doc.like++;
-//         doc.save();
-//         return res.json({code:0, data:doc})
-//     }).catch(() => {
-//         return res.json({code:1, msg:'服务器异常，稍后请重试'})
-//     })
-// })
+router.post('/index_detail_like',(req, res) => {
+    const {articleId, userId, isFlag} = req.body;
+    likeSchema.findOne({articleId}).then(doc => {
+        if(doc.userId.includes(userId)) {
+            // 点赞过
+            doc.likeCount--
+        } else {
+            // 未点赞过
+            doc.likeCount++
+        }
+        doc.save()
+    }).catch(() => {
+        return res.json({code:1, msg:'服务器异常，稍后请重试'})
+    })
+    // ArticleSchema.findOne({_id}).then((doc) => {
+    //     // 是否已经点击过
+    //     if(isFlag) {
+    //         doc.likeCount++;
+    //     } else {
+    //         doc.likeCount--;
+    //     }
+    //     doc.save();
+    //     return res.json({code:0, data:doc})
+    // }).catch(() => {
+    //     return res.json({code:1, msg:'服务器异常，稍后请重试'})
+    // })
+})
 /*
 *   模糊查询    /search
 * */
