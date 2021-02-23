@@ -3,6 +3,7 @@ const router = express.Router()
 
 const {CategorySchema, ArticleSchema} = require('../../modules/article')
 const {likeSchema} = require('../../modules/like')
+const {statisticsSchema} = require('../../modules/statistics')
 
 // 定义时间格式
 const {formDate, isAdmin} = require('../../unit/unit')
@@ -158,15 +159,44 @@ router.get('/index_detail_comments',(req, res) => {
 * */
 router.post('/index_detail_like',(req, res) => {
     const {articleId, userId, isFlag} = req.body;
-    likeSchema.findOne({articleId}).then(doc => {
-        if(doc.userId.includes(userId)) {
+    const result = {
+        articleId,
+        userId
+    }
+    likeSchema.findOne({articleId, userId}).then(doc => {
+        if(doc.length) {
             // 点赞过
-            doc.likeCount--
+            doc.deleteOne()
+            statisticsSchema.find({articleId}).then(doc => {
+                doc.likeCount--
+                doc.save()
+                // if(doc.length) {
+                //     statisticsSchema.findOneAndUpdate({articleId},{$set:{likeCount: doc.length}},{new:true}).then(doc => {
+                //         return res.json({code: 0, data: doc})
+                //     })
+                // } else {
+                //     statisticsSchema.create({likeCount: doc.length, articleId}).then(doc => {
+                //         return res.json({code: 0, data: doc})
+                //     })
+                // }
+            })
         } else {
-            // 未点赞过
-            doc.likeCount++
+            // 没有点赞过
+            likeSchema.create(result)
+            statisticsSchema.find({articleId}).then(doc => {
+                if(doc.length) {
+                    doc.likeCount++
+                    doc.save()
+                    // statisticsSchema.findOneAndUpdate({articleId},{$set:{likeCount: doc.length}},{new:true}).then(doc => {
+                    //     return res.json({code: 0, data: doc})
+                    // })
+                } else {
+                    statisticsSchema.create({likeCount: doc.length, articleId}).then(doc => {
+                        return res.json({code: 0, data: doc})
+                    })
+                }
+            })
         }
-        doc.save()
     }).catch(() => {
         return res.json({code:1, msg:'服务器异常，稍后请重试'})
     })
