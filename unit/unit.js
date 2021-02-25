@@ -13,10 +13,10 @@ exports.formDate = () => {
 
 // 中间件
 exports.isAdmin = (req, res, next) => {
+  console.log('req.headers.authorization', req.headers.authorization)
   const token = req.headers.authorization.split(' ').pop()
   try {
-    global.userInfo = jwt.verify(token, 'secret')
-    console.log('userInfo', userInfo)
+    const userInfo = jwt.verify(token, 'secret')
     next()
   }catch(err) {
     res.status(401).json({code: 1, msg: 'token已过期'})

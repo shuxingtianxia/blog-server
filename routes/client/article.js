@@ -8,6 +8,14 @@ const {statisticsSchema} = require('../../modules/statistics')
 // 定义时间格式
 const {formDate, isAdmin} = require('../../unit/unit')
 
+let userInfo = ''
+
+router.use((req, res, next) => {
+    // console.log('req.userInfo', req.userInfo)
+    userInfo = req.userInfo
+    next()
+})
+
 /*
 *   获取所有分类    /index_category
 * */
@@ -107,15 +115,15 @@ router.get('/index_article_next',(req, res) => {
 /*
 *   文章详情     /index_detail
 * */
-router.get('/index_detail',(req, res) => {
-    let _id = req.query.id
-    console.log(global.userInfo)
-    ArticleSchema.findOne({_id}).then(doc => {
+router.get('/index_detail', (req, res) => {
+    let articleId = req.query.id
+    ArticleSchema.findOne({_id: articleId}).then( async doc => {
         // 查询点赞数量及该用户是否已经点赞过
-        // likeSchema.findOne({articleId: _id}).then(doc1 => {
-        //     doc.likeCount = doc1.likeCount
-
-        // })
+        const result = userInfo && await likeSchema.findOne({userId: userInfo.id})
+        doc.isLike = result ? true : false
+        // 获取点赞的总数
+        const result1 = await statisticsSchema.findOne({articleId})
+        doc.likeCount = result1.likeCount
         doc.views++;
         doc.save()
         return res.json({code:0,data:doc})
@@ -163,35 +171,26 @@ router.post('/index_detail_like',(req, res) => {
         articleId,
         userId
     }
-    likeSchema.findOne({articleId, userId}).then(doc => {
-        if(doc.length) {
+    likeSchema.findOne({articleId, userId}).then(async doc => {
+        if(doc) {
             // 点赞过
-            doc.deleteOne()
-            statisticsSchema.find({articleId}).then(doc => {
-                doc.likeCount--
-                doc.save()
-                // if(doc.length) {
-                //     statisticsSchema.findOneAndUpdate({articleId},{$set:{likeCount: doc.length}},{new:true}).then(doc => {
-                //         return res.json({code: 0, data: doc})
-                //     })
-                // } else {
-                //     statisticsSchema.create({likeCount: doc.length, articleId}).then(doc => {
-                //         return res.json({code: 0, data: doc})
-                //     })
-                // }
+            await doc.remove()
+            statisticsSchema.findOne({articleId}).then(doc1 => {
+                doc1.likeCount--
+                doc1.save()
+                return res.json({code: 0, data: doc1})
             })
         } else {
             // 没有点赞过
             likeSchema.create(result)
-            statisticsSchema.find({articleId}).then(doc => {
-                if(doc.length) {
-                    doc.likeCount++
-                    doc.save()
-                    // statisticsSchema.findOneAndUpdate({articleId},{$set:{likeCount: doc.length}},{new:true}).then(doc => {
-                    //     return res.json({code: 0, data: doc})
-                    // })
+            statisticsSchema.findOne({articleId}).then(doc1 => {
+                if(doc1) {
+                    doc1.likeCount++
+                    doc1.save()
+                    return res.json({code: 0, data: doc1})
                 } else {
-                    statisticsSchema.create({likeCount: doc.length, articleId}).then(doc => {
+                    // 统计表还没有统计该文章点赞总数
+                    statisticsSchema.create({likeCount: 1, articleId}).then(doc => {
                         return res.json({code: 0, data: doc})
                     })
                 }
@@ -200,18 +199,6 @@ router.post('/index_detail_like',(req, res) => {
     }).catch(() => {
         return res.json({code:1, msg:'服务器异常，稍后请重试'})
     })
-    // ArticleSchema.findOne({_id}).then((doc) => {
-    //     // 是否已经点击过
-    //     if(isFlag) {
-    //         doc.likeCount++;
-    //     } else {
-    //         doc.likeCount--;
-    //     }
-    //     doc.save();
-    //     return res.json({code:0, data:doc})
-    // }).catch(() => {
-    //     return res.json({code:1, msg:'服务器异常，稍后请重试'})
-    // })
 })
 /*
 *   模糊查询    /search

@@ -4,6 +4,7 @@ const express = require('express')
 const bodyParser = require('body-parser')
 // 根据token实现验证请求
 const passport = require('passport')
+const jwt = require('jsonwebtoken')
 
 //引入处理路径模块
 const path = require('path')
@@ -32,10 +33,6 @@ mongoose.connect('mongodb://localhost/test93', {
 }).catch(() => {
     console.log('连接数据库失败');
 })
-
-// 引入路由  前台
-const route = require('./routes/index')
-route(app)
 
 //允许跨域
 app.all('*', (req, res, next) => {
@@ -71,12 +68,34 @@ app.get('/', (req, res) => {
 // app.use(upload.single('file'));
 
 // 使用body-parser中间件
-app.use(bodyParser.urlencoded({extended: true}))
+app.use(bodyParser.urlencoded({extended: false}))
 app.use(bodyParser.json())
+
+// 根据token
+app.use((req, res, next) => {
+    if(req.headers.authorization) {
+        const token = req.headers.authorization.split(' ').pop()
+        try {
+            // 保存用户信息
+            req.userInfo = jwt.verify(token, 'secret')
+            next()
+        }catch(err) {
+            res.status(401).json({code: 1, msg: 'token已过期'})
+        }
+    } else {
+        console.log('不存在用户cookie 数据！');
+        next();
+    }
+})
+
+// 引入路由  前台
+const route = require('./routes/index')
+route(app)
 
 // passport初始化
 app.use(passport.initialize())
 require('./config/passport')(passport)
+
 
 //使用模块
 

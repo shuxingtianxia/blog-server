@@ -41,11 +41,10 @@ router.post('/register',(req, res) => {
 *   登录    /login
 * */
 router.post('/login',(req, res) => {
-    console.log('req.body', req.body)
     const {username, password} = req.body
     UserModule.findOne({username}).then((user) => {
         if(!user){
-            return res.json({code:1,msg:'用户不存在'})
+            return res.json({code: 1, msg: '用户不存在'})
         }
         if(md5(password) == user.password){
             const rule = {
@@ -54,7 +53,7 @@ router.post('/login',(req, res) => {
                 isAdmin: user.isAdmin,
                 serverTime: Math.floor(new Date().getTime() / 1000)
             }
-            jwt.sign(rule, 'secret',{expiresIn: 10},(err, token) => {
+            jwt.sign(rule, 'secret',{expiresIn: 3600},(err, token) => {
                 if(err) throw err
                 return res.json({
                     code:0,
@@ -82,10 +81,10 @@ router.get('/logout',(req, res) => {
 /*
 *   检查是否登录     /checkLogin
 * */
-router.get('/checkLogin', isAdmin, (req, res) => {
-    console.log(req)
-    const {username, _id, isAdmin, time} = req.user
-    return res.json({code:0,data:{username, _id, isAdmin, time}})
-})
+// router.get('/checkLogin', isAdmin, (req, res) => {
+//     console.log(req.user)
+//     const {username, _id, isAdmin, time} = req.user
+//     return res.json({code:0,data:{username, _id, isAdmin, time}})
+// })
 
 module.exports = router
