@@ -2,8 +2,9 @@ const express = require('express')
 const router = express.Router()
 
 const {CategorySchema, ArticleSchema} = require('../../modules/article')
-const {likeSchema} = require('../../modules/like')
-const {statisticsSchema} = require('../../modules/statistics')
+const { likeSchema } = require('../../modules/like')
+const { viewSchema } = require('../../modules/view')
+const { statisticsSchema } = require('../../modules/statistics')
 
 // 定义时间格式
 const {formDate, isAdmin} = require('../../unit/unit')
@@ -116,7 +117,9 @@ router.get('/index_article_next',(req, res) => {
 *   文章详情     /index_detail
 * */
 router.get('/index_detail', (req, res) => {
+    
     let articleId = req.query.id
+    const ip = req.ip
     ArticleSchema.findOne({_id: articleId}).then( async doc => {
         // 查询点赞数量及该用户是否已经点赞过
         const result = userInfo && await likeSchema.findOne({userId: userInfo.id})
@@ -124,7 +127,21 @@ router.get('/index_detail', (req, res) => {
         // 获取点赞的总数
         const result1 = await statisticsSchema.findOne({articleId})
         doc.likeCount = result1.likeCount
-        doc.views++;
+        // 查看改用户是否浏览过
+        const viewDoc = await viewSchema.findOne({articleId, ip}) || {}
+        const time = formDate()
+        console.log('viewDoc', viewDoc)
+        if(viewDoc.ip !== ip){
+            console.log('reeq.id', req.ip)
+            // 没有被预览过
+            viewSchema.create({articleId, ip, time})
+            doc.views++
+        } else if((new Date(time)).getTime() - (new Date(viewDoc.time)).getTime() > (1000 * 60 * 60 * 6)) {
+            // 6个小时后访问会重新计算
+            viewDoc.time = time
+            viewDoc.save()
+            doc.views++
+        }
         doc.save()
         return res.json({code:0,data:doc})
     }).catch(() => {

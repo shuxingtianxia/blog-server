@@ -1,11 +1,11 @@
 const express = require('express')
 const router = express.Router()
 
-const {ArticleSchema, CategorySchema} = require('../modules/article')
-const {UserModule} = require('../modules/users')
+const {ArticleSchema, CategorySchema} = require('../../modules/article')
+const {UserModule} = require('../../modules/users')
 
 // 定义时间格式
-const {formDate, isAdmin} = require('../unit/unit')
+const {formDate, isAdmin} = require('../../unit/unit')
 
 /*
 *   // 查找所有用户       /admin_users
