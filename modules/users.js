@@ -5,6 +5,7 @@ const userSchema = mongoose.Schema({
     username:{type:String,required:true}, //用户名
     password:{type:String,required:true}, //密码
     isAdmin:{type:Boolean,default:false}, // 是不是管理员
+    city: {type: String}, // 城市
     time:{type:String,default: Date.now()} // 时间
 })
 // 2.2. 定义 Model(与集合对应, 可以操作集合)

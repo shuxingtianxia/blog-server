@@ -11,7 +11,8 @@ exports.CategorySchema = CategorySchema
 //文章
 const articleSchema = mongoose.Schema({
     articleName:{type:String,required:true},   //  文章标题
-    articleCategory:{type:mongoose.Schema.Types.ObjectId, ref:'category'},         //  文章分类
+    categoryId:{type:mongoose.Schema.Types.ObjectId, ref:'category'},         //  文章分类ID
+    articleCategory:{type: String},         //  文章分类
     files:{type:Object},                 //  文件信息
     dynamicTags:{type:Array},            //  关键字
     articleImgUrl:{type:String},               //   文章缩略图路径

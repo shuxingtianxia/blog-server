@@ -83,7 +83,7 @@ app.use((req, res, next) => {
             res.status(401).json({code: 1, msg: 'token已过期'})
         }
     } else {
-        console.log('不存在用户cookie 数据！');
+        // console.log('不存在用户cookie 数据！');
         next();
     }
 })
