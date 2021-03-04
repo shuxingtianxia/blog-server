@@ -2,16 +2,17 @@ const mongoose = require('mongoose')
 
 //分类
 const categorySchema = mongoose.Schema({
-    title:{type:String,required:true},
-    time:{type: String,default:Date.now()}
+    title:{type: String, required: true},
+    categoryImage: {type: String, required: true}, // 分类的图片
+    time:{type: String, default: Date.now()}
 })
 const CategorySchema = mongoose.model('category',categorySchema)
 exports.CategorySchema = CategorySchema
 
 //文章
 const articleSchema = mongoose.Schema({
-    articleName:{type:String,required:true},   //  文章标题
-    categoryId:{type:mongoose.Schema.Types.ObjectId, ref:'category'},         //  文章分类ID
+    articleName:{type: String, required:true},   //  文章标题
+    categoryId:{type: mongoose.Schema.Types.ObjectId, ref:'category'},         //  文章分类ID
     articleCategory:{type: String},         //  文章分类
     files:{type:Object},                 //  文件信息
     dynamicTags:{type:Array},            //  关键字

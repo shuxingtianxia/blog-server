@@ -92,7 +92,6 @@ router.get('/logout', (req, res) => {
 // })
 
 // 微信登录
-console.log('config', config);
 let { appId, secret, authorizationCode } = config;
 let sessionKey = null;
 let openid = null;
@@ -101,37 +100,53 @@ router.get('/onLogin', (req, res) => {
     // 获取到登录后的code
     const { encryptedData, iv, code } = req.query;
     // 向微信服务器发送信息获取到 openid 和 session_key
-    request(`https://api.weixin.qq.com/sns/jscode2session?appid=${appId}&secret=${secret}&js_code=${code}&grant_type=${authorizationCode}`, (err, response, body) => {
+    request(`https://api.weixin.qq.com/sns/jscode2session?appid=${appId}&secret=${secret}&js_code=${code}&grant_type=${authorizationCode}`, async (err, response, body) => {
         if (err) console.log(err);
         body = JSON.parse(body);
-
-        let { session_key } = body; // 提取session_key解密
-        let pc = new WXBizDataCrypt(appId, session_key)
-        const data = pc.decryptData(encryptedData, iv)
-        console.log(data, '8888888888888');
         /*
         签名校验以及数据加解密涉及用户的会话密钥session_key。 需要保存在服务器
         openid 判断是否是同一个用户
         session_key 判断用户是否失效
-    
         data: {
           openid: '**********',
           session_key: '********'
         }
         */
-        UserModule.findOne({ username: data.nickName }).then(user => {
-            if (user) return
-            formDate()
-            const time = formDate()
-            const newUser = new UserModule({
+        let { session_key } = body; // 提取session_key解密
+        let pc = new WXBizDataCrypt(appId, session_key)
+        const data = pc.decryptData(encryptedData, iv)
+        let user = await UserModule.findOne({ openId: data.openId })
+        if (!user) {
+            const newUser = {
                 username: data.nickName,
-                password: data.openId,
+                openId: data.openId,
                 city: data.city,
-                time
-            })
-            newUser.save()
-        })
+                type: 'wx',
+                avatarUrl: data.avatarUrl
+            }
+            user = await UserModule.create(newUser)
+        }
+        data.userId = user._id
+
+        // const rule = {
+        //     id: user._id,
+        //     username: user.username,
+        //     serverTime: Math.floor(new Date().getTime() / 1000)
+        // }
+        // jwt.sign(rule, 'secret', { expiresIn: 3600 }, (err, token) => {
+        //     if (err) throw err
+        //     return res.json({
+        //         code: 0,
+        //         success: true,
+        //         data: {
+        //             token: 'Bearer ' + token,
+        //             ...data
+        //         }
+        //     })
+        // })
         return res.json({ code: 0, data })
+
+        
     })
 })
 

@@ -5,6 +5,7 @@ const {CategorySchema, ArticleSchema} = require('../../modules/article')
 const { likeSchema } = require('../../modules/like')
 const { viewSchema } = require('../../modules/view')
 const { statisticsSchema } = require('../../modules/statistics')
+const { commentSchema } = require('../../modules/comment')
 
 // 定义时间格式
 const {formDate, isAdmin} = require('../../unit/unit')
@@ -12,7 +13,6 @@ const {formDate, isAdmin} = require('../../unit/unit')
 let userInfo = ''
 
 router.use((req, res, next) => {
-    // console.log('req.userInfo', req.userInfo)
     userInfo = req.userInfo
     next()
 })
@@ -31,7 +31,7 @@ router.get('/index_category',(req, res) => {
 * */
 router.get('/index_article_category',(req, res) => {
 
-    let {category,page} = req.query
+    let {category, page} = req.query
     page = Number(page) || 1
     let limit = 10
     let pages = 0
@@ -42,7 +42,7 @@ router.get('/index_article_category',(req, res) => {
         page = Math.max(page,1);
         let skip = (page-1)*limit
         ArticleSchema.find({articleCategory:category}).sort({_id: -1}).limit(limit).skip(skip).then(doc => {
-            return res.json({code:0,data:doc,count,limit,page,pages,skip})
+            return res.json({code:0, data: {data: doc, count, limit, page, pages, skip}})
         })
     })
 })
@@ -55,7 +55,7 @@ router.get('/index_article',(req, res) => {
     page =  Number(page) || 1
     limit = Number(size) || 10
     let pages = 0
-    ArticleSchema.count().then(count => {
+    ArticleSchema.countDocuments().then(count => {
         pages = Math.ceil(count/limit); //总数据除以每页限制数据=页数
         // page = Math.min(page,pages);
         // page = Math.max(page,1);
@@ -67,8 +67,8 @@ router.get('/index_article',(req, res) => {
               .limit(limit)
               .skip(skip)
               .populate({
-                  path: 'articleCategory',
-                  select: 'title'
+                path: 'categoryId',
+                select: 'title'
               }).then(doc => {
                 if(doc.length) {
                   return res.json({code:0, data: {data: doc, count, limit, page, pages, skip}})
@@ -83,8 +83,8 @@ router.get('/index_article',(req, res) => {
               .limit(limit)
               .skip(skip)
               .populate({
-                  path: 'articleCategory',
-                  select: 'title'
+                path: 'categoryId',
+                select: 'title'
               }).then(doc => {
                 if(doc.length) {
                   return res.json({code:0, data: {data: doc, count, limit, page, pages, skip}})
@@ -125,12 +125,12 @@ router.get('/index_article_next',(req, res) => {
 *   文章详情     /index_detail
 * */
 router.get('/index_detail', (req, res) => {
-    
     let articleId = req.query.id
+    let userId = req.query.userId
     const ip = req.ip
     ArticleSchema.findOne({_id: articleId}).then( async doc => {
         // 查询点赞数量及该用户是否已经点赞过
-        const result = userInfo && await likeSchema.findOne({userId: userInfo.id})
+        const result = userId && await likeSchema.findOne({userId})
         doc.isLike = result ? true : false
         // 获取点赞的总数
         const result1 = await statisticsSchema.findOne({articleId})
@@ -138,7 +138,6 @@ router.get('/index_detail', (req, res) => {
         // 查看改用户是否浏览过
         const viewDoc = await viewSchema.findOne({articleId, ip}) || {}
         const time = formDate()
-        console.log('viewDoc', viewDoc)
         if(viewDoc.ip !== ip){
             console.log('reeq.id', req.ip)
             // 没有被预览过
@@ -161,29 +160,59 @@ router.get('/index_detail', (req, res) => {
 *   // 文章详情,提交新的评论      /index_detail_comment
 * */
 router.post('/index_detail_comment',(req, res) => {
-    let {newComment, _id, username} = req.body
-    const time = formDate()
+    let {content, articleId, username, formId, avatar, replyId, userId} = req.body
     let newData = {
+        userId,
+        avatar,
         username,
-        comments: newComment,
-        time
+        articleId,
+        content,
+        formId,
+        replyId
     }
-    ArticleSchema.findOne({_id}).then(doc => {
-        doc.comment.unshift(newData)
-        doc.save()
-        return res.json({code:0,data:doc})
+    console.log('replyId', replyId)
+    commentSchema.findOne({_id: replyId === '0' ? null : replyId}).then(commentDoc => {
+        if(commentDoc) {
+            // 可以找到这条评论的父级
+            commentDoc.child.push(newData)
+            commentDoc.save()
+            return res.json({code:0, data: commentDoc})
+        } else {
+            commentSchema.create(newData).then(doc => {
+                return res.json({code:0,data:doc})
+            })
+        }
     })
+    
 })
 
 /*
 *   查找一篇文章的评论       /index_detail_comments
 * */
 router.get('/index_detail_comments',(req, res) => {
-    let {_id} = req.query
-    ArticleSchema.findOne({_id}).then(doc => {
-        return res.json({code:0,data:doc.comment})
-    }).catch(() => {
-        return res.json({code:1, msg:'服务器异常，请稍户重试'})
+    let {articleId, page} = req.query
+    page =  Number(page) || 1
+    limit = 10
+    let pages = 0
+    commentSchema.countDocuments().then(count => {
+        pages = Math.ceil(count/limit); //总数据除以每页限制数据=页数
+        let skip = (page-1)*limit
+        commentSchema
+        .find({articleId})
+        .sort({_id: -1})
+        .limit(limit)
+        .skip(skip)
+        .populate({
+          path: 'userId',
+        }).then(doc => {
+            if(doc.length) {
+                return res.json({code:0, data: {data: doc, count, limit, page, pages, skip}})
+              } else {
+                return res.json({code: 1, msg: '已经到底了'})
+              }
+        }).catch(() => {
+            return res.json({code:1, msg:'服务器异常，请稍户重试'})
+        })
     })
 })
 
@@ -191,7 +220,7 @@ router.get('/index_detail_comments',(req, res) => {
 *   点赞      /index_detail_like
 * */
 router.post('/index_detail_like',(req, res) => {
-    const {articleId, userId, isFlag} = req.body;
+    const {articleId, userId} = req.body;
     const result = {
         articleId,
         userId
@@ -203,7 +232,7 @@ router.post('/index_detail_like',(req, res) => {
             statisticsSchema.findOne({articleId}).then(doc1 => {
                 doc1.likeCount--
                 doc1.save()
-                return res.json({code: 0, data: doc1})
+                return res.json({code: 0, data: {isLike: false, ...doc1}})
             })
         } else {
             // 没有点赞过
@@ -212,11 +241,12 @@ router.post('/index_detail_like',(req, res) => {
                 if(doc1) {
                     doc1.likeCount++
                     doc1.save()
-                    return res.json({code: 0, data: doc1})
+                    return res.json({code: 0, data: {isLike: true, ...doc1}})
                 } else {
                     // 统计表还没有统计该文章点赞总数
                     statisticsSchema.create({likeCount: 1, articleId}).then(doc => {
-                        return res.json({code: 0, data: doc})
+                        doc.isLike = true
+                        return res.json({code: 0, data: {isLike: true, doc}})
                     })
                 }
             })

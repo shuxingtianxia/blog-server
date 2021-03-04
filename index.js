@@ -80,7 +80,8 @@ app.use((req, res, next) => {
             req.userInfo = jwt.verify(token, 'secret')
             next()
         }catch(err) {
-            res.status(401).json({code: 1, msg: 'token已过期'})
+            req.userInfo = {}
+            next()
         }
     } else {
         // console.log('不存在用户cookie 数据！');
