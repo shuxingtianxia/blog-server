@@ -31,7 +31,7 @@ router.get('/admin_users', isAdmin, (req, res) => {
 router.post('/admin_users_del', isAdmin, (req, res) => {
     let {_id} = req.body
     ArticleSchema.deleteOne({_id}).then(doc => {
-        return json({code:0,msg:'删除成功'})
+        return res.json({code:0,msg:'删除成功'})
     })
 })
 

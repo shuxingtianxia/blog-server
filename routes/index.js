@@ -9,6 +9,7 @@ const sBanner = require('./server/banner')
 const sAbout = require('./server/aboutMe')
 const sUsers = require('./server/users')
 const sArticle = require('./server/article')
+const sQiniu = require('./server/qiniu')
 
 module.exports = app => {
   // 前台
@@ -22,5 +23,6 @@ module.exports = app => {
   app.use('/server', sAbout)
   app.use('/server', sUsers)
   app.use('/server', sArticle)
+  app.use('/server', sQiniu)
 
 }

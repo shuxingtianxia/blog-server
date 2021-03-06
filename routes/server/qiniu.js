@@ -3,6 +3,8 @@ const express = require('express')
 const router = express.Router()
 const passport = require('passport')
 
+const {isAdmin} = require('../../unit/unit')
+
 const accessKey = 'ZfKQX_Vx_Q57FE3lSfLCDaoXDVehDEtc1M7tLLnt'
 const secretKey = 'ayQCGN9VV2cgOSoTtugaRZ67qFGsNuAkbWfxDY0Q'
 
@@ -22,7 +24,7 @@ config.zone = qiniu.zone.Zone_z2;
 // let option = { limit: 20 }
 
 // 获取前端上传七牛云所属需要的token
-router.get("/getToken", passport.authenticate('jwt', { session: false }), (req, res) => {
+router.get("/getToken", isAdmin, (req, res) => {
   let options = {
     scope: bucket,
     expires: 3600 * 24

@@ -9,6 +9,17 @@ const jwt = require('jsonwebtoken')
 //引入处理路径模块
 const path = require('path')
 
+//文件处理模块
+let fs = require('fs')
+//http 和 https服务模块
+let http = require('http')
+let https = require('https')
+//配置你的证书，注意这里的证书是nginx的，不管你服务器用的是apache还是什么这里只要放nginx就好了
+const httpsOption = {
+    key: fs.readFileSync("./https/5270609_booktianxia.top.key"),
+    cert: fs.readFileSync("./https/5270609_booktianxia.top.pem")
+}
+
 const app = express()
 
 //开放静态资源
@@ -101,6 +112,10 @@ require('./config/passport')(passport)
 //使用模块
 
 const post = process.env.POST || 6677
-app.listen(post, () => {
-    console.log('服务器启动成功');
-})
+// app.listen(post, () => {
+//     console.log('服务器启动成功');
+// })
+http.createServer(app).listen(post, () => {
+    console.log('服务器启动成功')
+});
+https.createServer(httpsOption, app).listen(6678);
