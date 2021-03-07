@@ -61,10 +61,7 @@ router.get('/checkLogin', isAdmin, (req, res) => {
 
 // 获取用户列表
 router.get('/admin_users', (req, res) => {
-  let {
-    articleId,
-    page
-  } = req.query
+  let {page} = req.query
   page = Number(page) || 1
   limit = 10
   let pages = 0
@@ -77,10 +74,10 @@ router.get('/admin_users', (req, res) => {
     .skip(skip)
     .then(doc => {
         if(doc.length) {
-            return res.json({code:0, data: {data: doc, count, limit, page, pages, skip}})
-          } else {
-            return res.json({code: 1, msg: '已经到底了'})
-          }
+          return res.json({code:0, data: {data: doc, count, limit, page, pages, skip}})
+        } else {
+          return res.json({code: 1, msg: '已经到底了'})
+        }
     }).catch(() => {
         return res.json({code:1, msg:'服务器异常，请稍户重试'})
     })

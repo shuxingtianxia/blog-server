@@ -5,36 +5,7 @@ const {ArticleSchema, CategorySchema} = require('../../modules/article')
 const {UserModule} = require('../../modules/users')
 
 // 定义时间格式
-const {formDate, isAdmin} = require('../../unit/unit')
-
-/*
-*   // 查找所有用户       /admin_users
-* */
-router.get('/admin_users', isAdmin, (req, res) => {
-    let {page} = req.query
-    let limit = 10
-    let pages = 0
-    UserModule.count().then(count => {
-        pages = Math.ceil(count/limit); //总数据除以每页限制数据=页数
-        page = Math.min(page,pages);
-        page = Math.max(page,1);
-        let skip = (page-1)*limit;
-        UserModule.find().limit(limit).skip(skip).then(doc => {
-            return res.json({code:0,data:doc,count,limit,page,pages,skip})
-        })
-    })
-})
-
-/*
-*   删除用户     /admin_users_del
-* */
-router.post('/admin_users_del', isAdmin, (req, res) => {
-    let {_id} = req.body
-    ArticleSchema.deleteOne({_id}).then(doc => {
-        return res.json({code:0,msg:'删除成功'})
-    })
-})
-
+const {isAdmin} = require('../../unit/unit')
 /*
 *   获取所有分类    /admin_category
 * */
@@ -49,10 +20,8 @@ router.get('/admin_category', isAdmin, (req, res) => {
 * */
 router.post('/admin_add', isAdmin, (req, res) => {
     const {title} = req.body
-    const time = formDate()
     newCategory= {
-        title,
-        time
+        title
     };
     CategorySchema.find({title}).then(doc => {
         if(doc.length) {
@@ -71,10 +40,8 @@ router.post('/admin_add', isAdmin, (req, res) => {
 * */
 router.post('/admin_edit', isAdmin, (req, res) => {
     const {title, _id} = req.body
-    const time = formDate()
     newCategory= {
-        title,
-        time
+        title
     };
     CategorySchema.find({title}).then(doc => {
         if(doc.length) {
@@ -103,10 +70,10 @@ router.get('/admin_del/:id', isAdmin, (req, res) => {
 *   查找所有文章    /admin_article
 * */
 router.get('/admin_article', isAdmin, (req, res) => {
-    console.log(123)
-    const {view} = req.query
-    let page =  Number(req.query.page) || 1
-    let limit = Number(req.query.size) || 10
+    let {view, articleName, page, size} = req.query
+    console.log(articleName);
+    page =  Number(page) || 1
+    let limit = Number(size) || 10
     let pages = 0
     ArticleSchema.countDocuments().then(count => {
         pages = Math.ceil(count/limit); //总数据除以每页限制数据=页数
@@ -135,7 +102,7 @@ router.get('/admin_article', isAdmin, (req, res) => {
                     path: 'articleCategory',
                     select: 'title'
                 }).then(doc => {
-                return res.json({code:0,data:doc,count,limit,page,pages,skip})
+                return res.json({code:0,data:{data:doc, count, limit, page, pages, skip}})
             })
         }
 
@@ -148,7 +115,6 @@ router.get('/admin_article', isAdmin, (req, res) => {
 router.post('/admin_article_add', isAdmin, (req, res) => {
     const {articleName, articleCategory, articleIntro, articleContent, dynamicTags, articleImgUrl } = req.body
     // const files = req.file
-    const time = formDate()
     // let keyword = [];
     // keyword = dynamicTags.split(',')
     const newArticle = {
@@ -157,7 +123,6 @@ router.post('/admin_article_add', isAdmin, (req, res) => {
         dynamicTags,
         articleIntro,
         articleContent,
-        time,
         articleImgUrl,
         // articleImgName:files.filename
     }
