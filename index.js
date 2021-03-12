@@ -116,6 +116,8 @@ const post = process.env.POST || 6677
 //     console.log('服务器启动成功');
 // })
 http.createServer(app).listen(post, () => {
-    console.log('服务器启动成功')
+    console.log('http启动成功', post)
 });
-https.createServer(httpsOption, app).listen(6678);
+https.createServer(httpsOption, app).listen(6678, () => {
+	console.log('https启动', 6678)
+});

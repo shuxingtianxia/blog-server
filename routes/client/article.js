@@ -22,6 +22,11 @@ router.use((req, res, next) => {
 * */
 router.get('/index_category',(req, res) => {
     CategorySchema.find().sort({time: -1}).then(category => {
+        // category.forEach(async item => {
+        //     const count = await ArticleSchema.count({articleCategory: item.title})
+        //     item.count = count
+        // })
+        console.log('category', category)
         res.json({code:0, msg:'查找所有分类成功',data:category})
     })
 })

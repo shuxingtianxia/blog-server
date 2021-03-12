@@ -25,7 +25,8 @@ const articleSchema = mongoose.Schema({
     likeCount: {type: Number, default: 0}, // 点赞数量
     isLike: {type: Boolean}, // 是否点赞过
     views:{type: Number,default: 0},       //   阅读量
-    comment: {type: Array,default: []}   //  文章评论
+    commentId: {type: mongoose.Schema.Types.ObjectId, ref:'comment'}, // 评论id
+    comment: {type: Array, default: []}   //  文章评论
 })
 const ArticleSchema = mongoose.model('article',articleSchema)
 exports.ArticleSchema = ArticleSchema

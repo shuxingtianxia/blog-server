@@ -122,13 +122,13 @@ router.get('/admin_article', isAdmin, (req, res) => {
 *   添加文章内容    /admin_article_add
 * */
 router.post('/admin_article_add', isAdmin, (req, res) => {
-    const {articleName, categoryId, articleIntro, articleContent, dynamicTags, articleImgUrl } = req.body
+    const {articleName, articleCategory, articleIntro, articleContent, dynamicTags, articleImgUrl } = req.body
     // const files = req.file
     // let keyword = [];
     // keyword = dynamicTags.split(',')
     const newArticle = {
         articleName,
-        categoryId,
+        articleCategory,
         dynamicTags,
         articleIntro,
         articleContent,
